@@ -29,14 +29,12 @@ pipeline {
                     def new_folder_name = "${Q_NAME}_${currentDate}"
 
                     // Construct the full path to the new folder inside OUTPUT_DIRECTORY
-                    // Using forward slashes for network paths
-                    def new_folder_path = "${params.OUTPUT_DIRECTORY}/${new_folder_name}".replace('\\', '/')
+                    def new_folder_path = "${params.OUTPUT_DIRECTORY}\\${new_folder_name}"
 
                     // Check if the folder exists, if not create it
                     if (!fileExists(new_folder_path)) {
                         echo "Folder '${new_folder_path}' does not exist. Creating..."
-                        // Create the new folder inside OUTPUT_DIRECTORY
-                        bat "mkdir \\"${new_folder_path.replace('/', '\\')}"""
+                        bat "mkdir \\"${new_folder_path.replace('/', '\\')}\\\\""
                     } else {
                         echo "Folder '${new_folder_path}' already exists."
                     }
@@ -44,16 +42,14 @@ pipeline {
                     // Copy messages to the new folder
                     def messageFiles = bat(returnStdout: true, script: "dir /B \\"${params.OUTPUT_DIRECTORY}"\\"").trim().split("\n")
                     if (messageFiles.size() > 0) {
-                                messageFiles.eachWithIndex { file, index ->
+                        messageFiles.eachWithIndex { file, index ->
                             def targetFileName = "${new_folder_path}\\${index + 1}.xml"
-                            // Correctly escaping the paths for the bat command
-                            bat "move \\\\"${params.OUTPUT_DIRECTORY}\\${file}\\\\" \\\\"${targetFileName}\\\\"""
+                            bat "move \\"${params.OUTPUT_DIRECTORY}\\${file}\\\\" \\"${targetFileName}\\\\""
                         }
                         echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
                     } else {
                         echo "No messages found in the queue ${Q_NAME}"
                     }
-
                 }
             }
         }
