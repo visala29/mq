@@ -1,0 +1,67 @@
+pipeline {
+    agent {
+        node {
+            label 'w2k16-shared'
+            customWorkspace("D:\\${JOB_BASE_NAME}")
+        }
+    }
+    
+    parameters {
+        string(name: 'OUTPUT_DIRECTORY', defaultValue: '\\TCHVDSM1\\Data\\Build_Coordinator\\AutoQueue\\Messages\\', description: 'Specify the output directory where output files will be copied')
+    }
+    
+    environment {
+        MQ_INSTALLATION_PATH = 'C:\\Program Files\\IBM\\MQ'
+        PATH = "${MQ_INSTALLATION_PATH}\\bin;${env.PATH}"
+    }
+    
+    stages {
+        stage('Retrieve Messages') {
+            steps {
+                script {
+                    def QMGR_NAME = 'QCTA'
+                    def Q_NAME = 'A4214QL.BISCBPLB.DSPROCESS.REQUEST.ERROR'
+                    
+                    // Get current date in yyyyMMdd format
+                    def currentDate = new Date().format('yyyyMMdd')
+                    
+                    // Construct the output directory path
+                    def output_dir = "${OUTPUT_DIRECTORY}${Q_NAME}"
+                    
+                    // Construct the new folder path
+                    def new_folder_name = "${Q_NAME}_${currentDate}"
+                    def new_folder_path = "${output_dir}\\${new_folder_name}"
+                    
+                    // Check if the folder already exists
+                    def folderExists = fileExists(new_folder_path)
+                    
+                    if (folderExists) {
+                        echo "Folder '${new_folder_path}' already exists. Copying messages..."
+                    } else {
+                        echo "Folder '${new_folder_path}' does not exist. Creating..."
+                        // Create the new folder if it doesn't exist
+                        bat "mkdir \"${new_folder_path}\""
+                    }
+                    
+                    // Copy messages to the new folder
+                    def messageFiles = bat(returnStdout: true, script: "dir /B \"${output_dir}\"").trim().split("\n")
+                    
+                    if (messageFiles.size() > 0) {
+                        messageFiles.eachWithIndex { file, index ->
+                            def targetFileName = "${new_folder_path}\\${index + 1}.xml"
+                            bat "move \"${output_dir}\\${file}\" \"${targetFileName}\""
+                            echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
+                        }
+                    } else {
+                        echo "No messages found in the queue ${Q_NAME}"
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Function to check if a directory exists
+def fileExists(path) {
+    return file(path).exists()
+}
