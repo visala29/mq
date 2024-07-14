@@ -46,7 +46,7 @@ pipeline {
                     if (messageFiles.size() > 0) {
                         messageFiles.eachWithIndex { file, index ->
                             def targetFileName = "${new_folder_path}\\${index + 1}.xml"
-                            bat "move \\""${params.OUTPUT_DIRECTORY}\\${file}\\""" \\"${targetFileName}\\"""
+                            bat "move \\\\"${params.OUTPUT_DIRECTORY}\\${file}\\\\" \\\\"${targetFileName}\\\\"""
                         }
                         echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
                     } else {
