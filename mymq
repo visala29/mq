@@ -25,7 +25,7 @@ pipeline {
                     // Get current date in yyyyMMdd format
                     def currentDate = new Date().format('yyyyMMdd')
 
-                    // Construct the new folder path inside OUTPUT_DIRECTORY
+                    // Construct the new folder name
                     def new_folder_name = "${Q_NAME}_${currentDate}"
                     def new_folder_path = "${params.OUTPUT_DIRECTORY}\\${new_folder_name}"
 
