@@ -44,14 +44,16 @@ pipeline {
                     // Copy messages to the new folder
                     def messageFiles = bat(returnStdout: true, script: "dir /B \\"${params.OUTPUT_DIRECTORY}"\\"").trim().split("\n")
                     if (messageFiles.size() > 0) {
-                        messageFiles.eachWithIndex { file, index ->
+                                messageFiles.eachWithIndex { file, index ->
                             def targetFileName = "${new_folder_path}\\${index + 1}.xml"
+                            // Correctly escaping the paths for the bat command
                             bat "move \\\\"${params.OUTPUT_DIRECTORY}\\${file}\\\\" \\\\"${targetFileName}\\\\"""
                         }
                         echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
                     } else {
                         echo "No messages found in the queue ${Q_NAME}"
                     }
+
                 }
             }
         }
