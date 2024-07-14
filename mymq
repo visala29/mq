@@ -28,16 +28,11 @@ pipeline {
                     // Construct the new folder name
                     def new_folder_name = "${Q_NAME}_${currentDate}"
 
-                    // Remove trailing backslashes from OUTPUT_DIRECTORY if present
-                    def outputDir = params.OUTPUT_DIRECTORY.endsWith("\\") ? params.OUTPUT_DIRECTORY[0..-2] : params.OUTPUT_DIRECTORY
+                    // Construct the full path to the new folder inside OUTPUT_DIRECTORY
+                    def new_folder_path = "${params.OUTPUT_DIRECTORY}\\${new_folder_name}"
 
-                    // Construct the new folder path inside OUTPUT_DIRECTORY
-                    def new_folder_path = "${outputDir}\\${new_folder_name}"
-
-                    // Check if the new folder already exists inside OUTPUT_DIRECTORY
-                    def folderExists = bat(returnStdout: true, script: "if exist \"${new_folder_path}\" (echo exists)").trim() == "exists"
-
-                    if (!folderExists) {
+                    // Check if the folder exists, if not create it
+                    if (!fileExists(new_folder_path)) {
                         echo "Folder '${new_folder_path}' does not exist. Creating..."
                         // Create the new folder inside OUTPUT_DIRECTORY
                         bat "mkdir \"${new_folder_path}\""
@@ -46,11 +41,11 @@ pipeline {
                     }
 
                     // Copy messages to the new folder
-                    def messageFiles = bat(returnStdout: true, script: "dir /B \"${outputDir}\"").trim().split("\n")
+                    def messageFiles = bat(returnStdout: true, script: "dir /B \"${params.OUTPUT_DIRECTORY}\"").trim().split("\n")
                     if (messageFiles.size() > 0) {
                         messageFiles.eachWithIndex { file, index ->
-                            def targetFileName = "${new_folder_path}\\${file}"
-                            bat "move \"${outputDir}\\${file}\" \"${targetFileName}\""
+                            def targetFileName = "${new_folder_path}\\${index + 1}.xml"
+                            bat "move \"${params.OUTPUT_DIRECTORY}\\${file}\" \"${targetFileName}\""
                         }
                         echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
                     } else {
