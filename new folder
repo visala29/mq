@@ -1,0 +1,14 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Create Folder') {
+            steps {
+                script {
+                    def folderPath = "C:\\path\\to\\your\\folder"  // Specify your folder path
+                    bat "powershell.exe New-Item -ItemType Directory -Path ${folderPath}"
+                }
+            }
+        }
+    }
+}
