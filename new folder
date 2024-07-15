@@ -2,10 +2,10 @@ pipeline {
     agent any
     
     stages {
-        stage('Create Folder') {
+        stage('Create Folder on C Drive') {
             steps {
                 script {
-                    def folderPath = "C:\\path\\to\\your\\folder"  // Specify your folder path
+                    def folderPath = "C:\\my-folder"  // Specify the folder path on C drive
                     bat "powershell.exe New-Item -ItemType Directory -Path ${folderPath}"
                 }
             }
