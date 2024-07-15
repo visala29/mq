@@ -1,0 +1,75 @@
+pipeline {
+    agent {
+        node {
+            label 'w2k16-shared'
+            customWorkspace("D:\\${JOB_BASE_NAME}")
+        }
+    }
+
+    parameters {
+        string(name: 'OUTPUT_DIRECTORY', defaultValue: 'C:\\Temp\\Messages', description: 'Specify the output directory where output files will be copied')
+    }
+
+    environment {
+        MQ_INSTALLATION_PATH = 'C:\\Program Files\\IBM\\MQ'
+        PATH = "${MQ_INSTALLATION_PATH}\\bin;${env.PATH}"
+    }
+
+    stages {
+        stage('Retrieve Messages') {
+            steps {
+                script {
+                    def QMGR_NAME = 'QCTA'
+                    def Q_NAME = 'A4214QL.BISCBPLB.DSPROCESS.REQUEST.ERROR'
+
+                    // Get current date in yyyyMMdd format
+                    def currentDate = new Date().format('yyyyMMdd')
+
+                    // Construct the output directory path
+                    def output_dir = "${params.OUTPUT_DIRECTORY}\\${Q_NAME}"
+
+                    // Construct the new folder path
+                    def new_folder_name = "${Q_NAME}_${currentDate}"
+                    def new_folder_path = "${output_dir}\\${new_folder_name}"
+
+                    // Debug: Print paths
+                    echo "Output directory: ${output_dir}"
+                    echo "New folder path: ${new_folder_path}"
+
+                    // Check if the folder already exists
+                    def folderExists = fileExists(new_folder_path)
+
+                    echo "Folder exists: ${folderExists}"
+
+                    if (folderExists) {
+                        echo "Folder '${new_folder_path}' already exists. Copying messages..."
+                    } else {
+                        echo "Folder '${new_folder_path}' does not exist. Creating..."
+                        // Create the new folder if it doesn't exist
+                        def createFolderCommand = "mkdir \"${new_folder_path}\""
+                        echo "Create folder command: ${createFolderCommand}"
+                        bat createFolderCommand
+                    }
+
+                    // Copy messages to the new folder
+                    def dirCommand = "dir /B \"${output_dir}\""
+                    echo "Dir command: ${dirCommand}"
+                    def messageFiles = bat(returnStdout: true, script: dirCommand).trim().split("\n")
+
+                    if (messageFiles.size() > 0) {
+                        messageFiles.eachWithIndex { file, index ->
+                            def sourceFilePath = "${output_dir}\\${file}"
+                            def targetFileName = "${new_folder_path}\\${index + 1}.xml"
+                            def moveCommand = "move \"${sourceFilePath}\" \"${targetFileName}\""
+                            echo "Move command: ${moveCommand}"
+                            bat moveCommand
+                        }
+                        echo "Messages copied from the queue ${Q_NAME} to ${new_folder_name}"
+                    } else {
+                        echo "No messages found in the queue ${Q_NAME}"
+                    }
+                }
+            }
+        }
+    }
+}
