@@ -5,16 +5,18 @@ pipeline {
         stage('Create Folder on C Drive') {
             steps {
                 script {
-                    def folderPath = "C:\\Path\\To\\Your\\Folder"
+                    // Define the folder name and path on the C drive
+                    def folderName = "MyNewFolder"
+                    def folderPath = "C:\\${folderName}"
                     
                     // Create the folder using bat command
                     bat "mkdir \"${folderPath}\""
                     
                     // Verify if the folder was created
                     if (fileExists(folderPath)) {
-                        echo "Folder created successfully at ${folderPath}"
+                        echo "Folder '${folderName}' created successfully at ${folderPath}"
                     } else {
-                        error "Failed to create folder at ${folderPath}"
+                        error "Failed to create folder '${folderName}' at ${folderPath}"
                     }
                 }
             }
