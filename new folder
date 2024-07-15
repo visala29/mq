@@ -5,8 +5,17 @@ pipeline {
         stage('Create Folder on C Drive') {
             steps {
                 script {
-                    def folderPath = "C:\\my-folder"  // Specify the folder path on C drive
-                    bat "powershell.exe New-Item -ItemType Directory -Path ${folderPath}"
+                    def folderPath = "C:\\Path\\To\\Your\\Folder"
+                    
+                    // Create the folder using bat command
+                    bat "mkdir \"${folderPath}\""
+                    
+                    // Verify if the folder was created
+                    if (fileExists(folderPath)) {
+                        echo "Folder created successfully at ${folderPath}"
+                    } else {
+                        error "Failed to create folder at ${folderPath}"
+                    }
                 }
             }
         }
