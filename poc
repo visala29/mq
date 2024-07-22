@@ -1,0 +1,28 @@
+pipeline {
+    agent any  // Or specify a label for a particular node if necessary
+    stages {
+        stage('Dump MQ Messages') {
+            steps {
+                script {
+                    // Define variables
+                    def queueManager = "QM93WIN"
+                    def inputQueue = "Q1"
+                    def messageCount = 1
+                    def date = new Date().format("yyyyMMdd")
+                    def fileName = "deleted-message-${date}.txt"
+                    def filePath = "C:\\DeletedMessages\\${fileName}"
+
+                    // Create the directory if it does not exist
+                    bat """
+                        if not exist C:\\DeletedMessages mkdir C:\\DeletedMessages
+                    """
+
+                    // Run the dmpmqmsg command
+                    bat """
+                        dmpmqmsg -m ${queueManager} -I ${inputQueue} -r ${messageCount} -f ${filePath}
+                    """
+                }
+            }
+        }
+    }
+}
