@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clear MQ Queue') {
+            steps {
+                script {
+                    sh '''
+                    # Clear MQ Queue
+                    dmpmqmsg -m QUEUE_MANAGER -i QUEUE_NAME > /dev/null
+                    '''
+                }
+            }
+        }
+    }
+}
