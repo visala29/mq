@@ -1,18 +1,36 @@
 pipeline {
     agent any
+    
+    environment {
+        OUTPUT_DIR = 'C:\\output'
+        MESSAGE_FILE = "${OUTPUT_DIR}\\deleted-message-1.txt"
+        MQ_NAME = 'QM93WIN'
+        QUEUE_NAME = 'Q1'
+        DMPMQMSG_DIR = 'C:\\Path\\To\\Dmpmqmsg' // Adjust if needed
+    }
+    
     stages {
         stage('Prepare Environment') {
             steps {
-                bat '''
-                if not exist C:\\output (
-                    mkdir C:\\output
-                )
-                '''
+                script {
+                    // Ensure output directory exists
+                    bat """
+                    if not exist ${OUTPUT_DIR} (
+                        mkdir ${OUTPUT_DIR}
+                    )
+                    """
+                }
             }
         }
         stage('Clear Message Queue') {
             steps {
-                bat 'dmpmqmsg -m QM93WIN -I Q1 -r 1 -f C:\\output\\deleted-message-1.txt'
+                script {
+                    // Change directory to where dmpmqmsg is located
+                    bat """
+                    cd ${DMPMQMSG_DIR}
+                    dmpmqmsg -m ${MQ_NAME} -I ${QUEUE_NAME} -r 1 -f ${MESSAGE_FILE}
+                    """
+                }
             }
         }
     }
