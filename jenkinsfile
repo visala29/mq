@@ -5,6 +5,7 @@ pipeline {
         MQ_QUEUE_MANAGER = 'QM93WIN'
         MQ_QUEUE_NAME = 'Q1'
         OUTPUT_FILE = 'C:\\output\\deleted-message-1.txt'
+        DMPMQMSG_DIR = 'C:\\Path\\To\\Dmpmqmsg' // Specify the directory containing dmpmqmsg
     }
 
     stages {
@@ -13,9 +14,11 @@ pipeline {
                 script {
                     // Ensure the output directory exists
                     def outputDir = 'C:\\output'
-                    if (!new File(outputDir).exists()) {
-                        bat "mkdir ${outputDir}"
-                    }
+                    bat """
+                    if not exist ${outputDir} (
+                        mkdir ${outputDir}
+                    )
+                    """
                 }
             }
         }
@@ -23,7 +26,10 @@ pipeline {
             steps {
                 script {
                     // Clear messages from the MQ queue
-                    def command = "dmpmqmsg -m ${env.MQ_QUEUE_MANAGER} -I ${env.MQ_QUEUE_NAME} -r 1 -f ${env.OUTPUT_FILE}"
+                    def command = """
+                    set PATH=${env.DMPMQMSG_DIR};%PATH%
+                    dmpmqmsg -m ${env.MQ_QUEUE_MANAGER} -I ${env.MQ_QUEUE_NAME} -r 1 -f ${env.OUTPUT_FILE}
+                    """
                     bat command
                 }
             }
