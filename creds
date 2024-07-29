@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Create Folder on Local Machine') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'local-machine-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh '''
+                        sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@your-local-machine-ip "mkdir -p C:/your-folder-path"
+                    '''
+                }
+            }
+        }
+    }
+}
