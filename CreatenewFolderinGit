@@ -1,11 +1,11 @@
 pipeline {
     agent any
-    
+
     environment {
         GIT_REPO_URL = 'https://github.com/your-username/your-repo.git'
         GIT_BRANCH = 'main'
         GIT_CREDENTIALS_ID = 'your-github-credentials-id'
-        FOLDER_NAME = 'new-folder'
+        FOLDER_PREFIX = 'variable_todaydate'
     }
 
     stages {
@@ -14,24 +14,30 @@ pipeline {
                 git branch: "${GIT_BRANCH}", credentialsId: "${GIT_CREDENTIALS_ID}", url: "${GIT_REPO_URL}"
             }
         }
-        
-        stage('Create New Folder') {
+
+        stage('Create Folder with Today\'s Date') {
             steps {
-                sh """
-                mkdir -p ${FOLDER_NAME}
-                """
+                script {
+                    def today = new Date().format('yyyy-MM-dd')
+                    def folderName = "${FOLDER_PREFIX}_${today}"
+                    sh "mkdir -p ${folderName}"
+                }
             }
         }
 
         stage('Commit and Push Changes') {
             steps {
-                sh """
-                git config user.name 'your-username'
-                git config user.email 'your-email@example.com'
-                git add ${FOLDER_NAME}
-                git commit -m 'Add new folder ${FOLDER_NAME}'
-                git push origin ${GIT_BRANCH}
-                """
+                script {
+                    def today = new Date().format('yyyy-MM-dd')
+                    def folderName = "${FOLDER_PREFIX}_${today}"
+                    sh """
+                    git config user.name 'your-username'
+                    git config user.email 'your-email@example.com'
+                    git add ${folderName}
+                    git commit -m 'Add new folder ${folderName}'
+                    git push origin ${GIT_BRANCH}
+                    """
+                }
             }
         }
     }
