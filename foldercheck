@@ -24,9 +24,16 @@ REM Create the unique folder
 md "%NETWORK_PATH%\%FOLDER_NAME%"
 
 REM Check the queue depth before processing messages
-for /f "tokens=2 delims==" %%A in ('dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -ds ^| findstr /c:"CURDEPTH"') do set QUEUE_DEPTH=%%A
+for /f "tokens=2 delims= " %%A in ('dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -ds ^| findstr /c:"CURDEPTH"') do (
+    set QUEUE_DEPTH=%%A
+)
 
-REM If queue depth is zero, exit the script
+REM If queue depth is not set or is zero, exit the script
+if "%QUEUE_DEPTH%"=="" (
+    echo Error determining queue depth.
+    exit /b
+)
+
 if "%QUEUE_DEPTH%"=="0" (
     echo No messages to process.
     exit /b
@@ -44,9 +51,18 @@ REM Check if the dump and removal was successful
 if %ERRORLEVEL% EQU 0 (
     echo Message %MSG_COUNTER% saved and removed from queue.
     set /a MSG_COUNTER+=1
+    REM Check if there are more messages to process
+    for /f "tokens=2 delims= " %%A in ('dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -ds ^| findstr /c:"CURDEPTH"') do (
+        set QUEUE_DEPTH=%%A
+    )
+    if "%QUEUE_DEPTH%"=="0" (
+        echo No more messages to process.
+        exit /b
+    )
     goto START_LOOP
 ) else (
-    echo No more messages to process or an error occurred.
+    echo Error dumping message or no more messages to process.
+    exit /b
 )
 
 REM End of script
