@@ -16,12 +16,12 @@ set /a MSG_COUNTER=1
 
 :START_LOOP
 
-REM Dump the next message to a file
-dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -f "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml" -n 1
+REM Dump the next message to a file and remove it from the queue
+dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -f "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml" -n 1 -r
 
-REM Check if the dump was successful and if a message was retrieved
+REM Check if the dump and removal was successful
 if %ERRORLEVEL% EQU 0 (
-    echo Message %MSG_COUNTER% saved to %SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml
+    echo Message %MSG_COUNTER% saved and removed from queue.
     REM Increment message counter
     set /a MSG_COUNTER+=1
     goto START_LOOP
