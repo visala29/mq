@@ -1,0 +1,33 @@
+@echo off
+setlocal
+
+REM Set variables for queue name, queue manager, and date
+set QUEUE_NAME=your_queue_name
+set QUEUE_MANAGER=your_queue_manager_name
+set DATE=%date:~10,4%-%date:~4,2%  REM Formats date as YYYY-MM-DD
+set NETWORK_PATH=\\your\network\shared\path
+
+REM Create the directory in the network shared path
+set SAVE_PATH=%NETWORK_PATH%\%QUEUE_NAME%_%DATE%
+md "%SAVE_PATH%"
+
+REM Initialize message counter
+set /a MSG_COUNTER=1
+
+:START_LOOP
+
+REM Dump the next message to a file
+dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -f "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml" -n 1
+
+REM Check if the dump was successful and if a message was retrieved
+if %ERRORLEVEL% EQU 0 (
+    echo Message %MSG_COUNTER% saved to %SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml
+    REM Increment message counter
+    set /a MSG_COUNTER+=1
+    goto START_LOOP
+) else (
+    echo No more messages to process or an error occurred.
+)
+
+REM End of script
+endlocal
