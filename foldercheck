@@ -23,13 +23,22 @@ if exist "%NETWORK_PATH%\%FOLDER_NAME%" (
 REM Create the unique folder
 md "%NETWORK_PATH%\%FOLDER_NAME%"
 
+REM Check the queue depth before processing messages
+for /f "tokens=2 delims==" %%A in ('dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -ds ^| findstr /c:"CURDEPTH"') do set QUEUE_DEPTH=%%A
+
+REM If queue depth is zero, exit the script
+if "%QUEUE_DEPTH%"=="0" (
+    echo No messages to process.
+    exit /b
+)
+
 REM Initialize message counter
 set /a MSG_COUNTER=1
 
 :START_LOOP
 
 REM Dump the next message to a file and remove it from the queue
-dmpmqmsg -I %QUEUE_NAME% -f "%NETWORK_PATH%\%FOLDER_NAME%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml" -n 1
+dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -f "%NETWORK_PATH%\%FOLDER_NAME%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml" -n 1
 
 REM Check if the dump and removal was successful
 if %ERRORLEVEL% EQU 0 (
