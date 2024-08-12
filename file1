@@ -1,0 +1,55 @@
+@echo off
+setlocal
+
+REM Set variables for queue name, queue manager, date, and time
+set QUEUE_NAME=your_queue_name
+set QUEUE_MANAGER=your_queue_manager_name
+set DATE=%date:~10,4%-%date:~4,2%-%date:~7,2%  REM Formats date as YYYY-MM-DD
+set TIME=%time:~0,2%-%time:~3,2%-%time:~6,2%
+set NETWORK_PATH=\\your\network\shared\path
+
+REM Create the directory in the network shared path
+set SAVE_PATH=%NETWORK_PATH%\%QUEUE_NAME%_%DATE%_%TIME%
+md "%SAVE_PATH%"
+
+:check_queue_depth
+REM Get the current queue depth
+for /f "tokens=3" %%a in ('echo dis ql(%QUEUE_NAME%) curdepth ^| runmqsc %QUEUE_MANAGER%') do (
+    set QUEUE_DEPTH=%%a
+    goto :continue
+)
+:continue
+
+if "%QUEUE_DEPTH%"=="" (
+    echo Failed to retrieve queue depth.
+    endlocal
+    exit /b 1
+)
+
+echo Queue depth: %QUEUE_DEPTH%
+
+REM Check if queue depth is greater than 0
+if %QUEUE_DEPTH% GTR 0 (
+    echo Dumping messages from queue %QUEUE_NAME%
+    dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -f "%SAVE_PATH%\%QUEUE_NAME%.xml" -d include_header
+
+    REM Check if the dump was successful
+    if %ERRORLEVEL% EQU 0 (
+        echo Messages successfully dumped to %SAVE_PATH%\%QUEUE_NAME%.xml
+
+        REM Clear the messages from the queue by dumping them to NUL (a null device)
+        dmpmqmsg -m %QUEUE_MANAGER% -i %QUEUE_NAME% -o NUL -d include_header
+
+        if %ERRORLEVEL% EQU 0 (
+            echo Messages successfully cleared from %QUEUE_NAME%
+        ) else (
+            echo Error clearing messages from %QUEUE_NAME%
+        )
+    ) else (
+        echo Error dumping messages from %QUEUE_NAME%
+    )
+) else (
+    echo No messages found in the queue.
+)
+
+endlocal
