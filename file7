@@ -1,0 +1,58 @@
+@echo off
+setlocal
+
+REM Set variables for queue name, queue manager, and date
+set QUEUE_NAME=your_queue_name
+set QUEUE_MANAGER=your_queue_manager_name
+set DATE=%date:~10,4%-%date:~4,2%
+set TIME=%time:~0,2%-%time:~3,2%-%time:~6,2%
+set NETWORK_PATH=\\your\network\shared\path
+
+REM Create the directory in the network shared path
+set SAVE_PATH=%NETWORK_PATH%\%QUEUE_NAME%_%DATE%_%TIME%
+md "%SAVE_PATH%"
+
+REM Initialize message counter
+set /a MSG_COUNTER=1
+
+:CHECK_DEPTH
+
+REM Check the queue depth
+echo DISPLAY QSTATUS(%QUEUE_NAME%) CURDEPTH > "%SAVE_PATH%\check_depth.mqsc"
+runmqsc %QUEUE_MANAGER% < "%SAVE_PATH%\check_depth.mqsc" > "%SAVE_PATH%\queue_depth.txt"
+
+REM Extract the current depth from the output file
+for /f "tokens=2 delims= " %%a in ('findstr CURDEPTH "%SAVE_PATH%\queue_depth.txt"') do set CURDEPTH=%%a
+
+REM If the queue depth is 0, exit the script
+if "%CURDEPTH%"=="0" (
+    echo No more messages in %QUEUE_NAME%. Exiting script.
+    goto :END
+)
+
+:START_LOOP
+
+REM Dump the messages from the queue to a file
+dmpmqmsg -m %QUEUE_MANAGER% -I %QUEUE_NAME% -r 1 -f "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER.xml"
+
+REM Check if the message file was created and is not empty
+if exist "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER.xml" (
+    for %%F in ("%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER.xml") do (
+        if %%~zF GTR 0 (
+            echo Message %MSG_COUNTER% saved and removed from queue.
+            REM Increment message counter
+            set /a MSG_COUNTER+=1
+            goto CHECK_DEPTH
+        ) else (
+            echo No more messages in %QUEUE_NAME%. Exiting script.
+            goto :END
+        )
+    )
+) else (
+    echo Error occurred: %ERRORLEVEL%. Exiting script.
+    goto :END
+)
+
+:END
+REM End of script
+endlocal
