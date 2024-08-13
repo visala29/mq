@@ -1,0 +1,39 @@
+@echo off
+setlocal
+
+REM Set the queue manager and queue name
+set QMGR=YOUR_QUEUE_MANAGER
+set QUEUE=YOUR_QUEUE_NAME
+
+REM Define output file for MQSC command
+set OUTPUT_FILE=mqsc_output.txt
+
+REM Run the MQSC command to get queue depth
+echo display qstatus(%QUEUE%) curdepth > get_depth.mqsc
+echo end >> get_depth.mqsc
+runmqsc %QMGR% < get_depth.mqsc > %OUTPUT_FILE%
+
+REM Check if runmqsc executed successfully
+if %ERRORLEVEL% NEQ 0 (
+    echo runmqsc command failed.
+    exit /b %ERRORLEVEL%
+)
+
+REM Process the output
+for /f "tokens=2 delims==" %%A in ('findstr /i "CURDEPTH" %OUTPUT_FILE%') do (
+    echo Queue Depth for %QUEUE% is %%A
+    REM Example: Compare with a counter or perform other operations
+    REM Increment counter if depth is greater than a certain value
+    set /a depth=%%A
+    if !depth! GEQ 10 (
+        echo Queue depth is 10 or greater.
+    ) else (
+        echo Queue depth is less than 10.
+    )
+)
+
+REM Clean up temporary files
+del get_depth.mqsc
+del %OUTPUT_FILE%
+
+endlocal
