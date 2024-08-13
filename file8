@@ -1,0 +1,32 @@
+@echo off
+setlocal
+
+REM Set the queue manager and queue name
+set QMGR=YOUR_QUEUE_MANAGER
+set QUEUE=YOUR_QUEUE_NAME
+
+REM Initialize message counter
+set /a messageCounter=1
+
+REM Command to get the queue depth
+echo display qstatus(%QUEUE%) curdepth | runmqsc %QMGR% | findstr /i "CURDEPTH" > temp_depth.txt
+
+REM Process the output
+for /f "tokens=2 delims==" %%A in ('findstr /i "CURDEPTH" temp_depth.txt') do (
+    echo Comparing messageCounter value (%messageCounter%) to %%A
+    if %messageCounter% LEQ %%A (
+        echo Counter value %messageCounter% is less than or equal to %%A
+        REM Increment the counter
+        set /a messageCounter+=1
+    ) else (
+        echo Counter value %messageCounter% is greater than %%A
+    )
+)
+
+REM Clean up temporary file
+del temp_depth.txt
+
+REM Print final counter value
+echo Final counter value is %messageCounter%
+
+endlocal
