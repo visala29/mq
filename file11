@@ -1,0 +1,1 @@
+echo DISPLAY QL(Q1) CURDEPTH | runmqsc QM92 | findstr "CURDEPTH("
