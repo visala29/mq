@@ -1,0 +1,11 @@
+echo display qstatus(%QUEUE%) curdepth | runmqsc %QMGR% | findstr /i "CURDEPTH" > temp_depth.txt
+
+REM Process the output and print the depth
+for /f "tokens=2 delims==" %%A in ('findstr /i "CURDEPTH" temp_depth.txt') do (
+    echo The current depth of %QUEUE% is %%A
+)
+
+REM Clean up temporary file
+del temp_depth.txt
+
+endlocal
