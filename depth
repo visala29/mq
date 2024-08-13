@@ -1,0 +1,20 @@
+@echo off
+setlocal enabledelayedexpansion
+
+:: Set the name of the MSMQ queue
+set "queueName=YourQueueName"
+
+:: Use PowerShell to get the queue depth
+for /f "delims=" %%i in ('powershell -Command "$queue = Get-MsmqQueue -Name '%queueName%'; $queue.MessageCount"') do set "queueDepth=%%i"
+
+:: Check if queue depth was retrieved successfully
+if defined queueDepth (
+    echo Queue depth for %queueName%: !queueDepth!
+) else (
+    echo Failed to retrieve queue depth for %queueName%.
+)
+
+:: Use the queueDepth variable as needed
+echo Queue depth is assigned to variable queueDepth with value: !queueDepth!
+
+endlocal
