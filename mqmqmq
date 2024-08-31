@@ -1,0 +1,36 @@
+@echo off
+setlocal
+
+REM Set the queue manager name and queue name
+set "QMGR_NAME=YOUR_QUEUE_MANAGER"
+set "QUEUE_NAME=YOUR_QUEUE"
+
+REM Run the MQSC command to get the queue depth
+echo DISPLAY QSTATUS(%QUEUE_NAME%) CURDEPTH > temp_mqsc.txt
+runmqsc %QMGR_NAME% < temp_mqsc.txt > temp_output.txt
+
+REM Check for "not authorized" error
+findstr /i "AMQ" temp_output.txt | findstr /i "not authorized" >nul
+if %errorlevel% equ 0 (
+    echo Error: Not authorized to access queue %QUEUE_NAME%.
+    del temp_mqsc.txt
+    del temp_output.txt
+    exit /b 1
+)
+
+REM Extract the depth from the output
+for /f "tokens=2 delims=( )" %%A in ('findstr /i "CURDEPTH" temp_output.txt') do (
+    set "DEPTH=%%A"
+)
+
+REM Convert the depth to an integer (not necessary, but shown for clarity)
+set /a QUEUE_DEPTH=%DEPTH%
+
+REM Display the depth as an integer
+echo The current depth of queue %QUEUE_NAME% is: %QUEUE_DEPTH%
+
+REM Clean up temporary files
+del temp_mqsc.txt
+del temp_output.txt
+
+endlocal
