@@ -1,0 +1,37 @@
+# Set the queue manager name and queue name
+$QMGR_NAME = "YOUR_QUEUE_MANAGER"
+$QUEUE_NAME = "YOUR_QUEUE"
+
+# Create the MQSC command
+$mqscCommand = "DISPLAY QSTATUS($QUEUE_NAME) CURDEPTH"
+
+# Run the MQSC command and capture the output
+$tempMqscFile = "temp_mqsc.txt"
+$tempOutputFile = "temp_output.txt"
+$mqscCommand | Out-File -FilePath $tempMqscFile -Encoding ASCII
+runmqsc $QMGR_NAME < $tempMqscFile > $tempOutputFile
+
+# Read the output file
+$output = Get-Content $tempOutputFile
+
+# Check for "not authorized" error
+if ($output -match "AMQ.*not authorized") {
+    Write-Host "Error: Not authorized to access queue $QUEUE_NAME."
+    Remove-Item $tempMqscFile, $tempOutputFile
+    exit 1
+}
+
+# Extract the CURDEPTH value from the output
+$depthLine = $output | Select-String -Pattern "CURDEPTH"
+if ($depthLine) {
+    $depth = ($depthLine -split "\(")[1] -replace "\)", ""
+    $queueDepth = [int]$depth
+
+    # Display the queue depth
+    Write-Host "The current depth of queue $QUEUE_NAME is: $queueDepth"
+} else {
+    Write-Host "Error: Unable to retrieve queue depth."
+}
+
+# Clean up temporary files
+Remove-Item $tempMqscFile, $tempOutputFile
