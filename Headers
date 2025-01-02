@@ -1,0 +1,24 @@
+REM Check if the dump and removal was successful
+if %ERRORLEVEL% EQU 0 (
+    REM Insert a header with metadata (Queue Name, Manager, Date, Time, Message Number) before each message
+    echo Header Information: >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo Queue Manager: %QUEUE_MANAGER% >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo Queue Name: %QUEUE_NAME% >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo Date: %DATE% >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo Time: %TIME% >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo Message Number: %MSG_COUNTER% >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+    echo. >> "%SAVE_PATH%\%QUEUE_NAME%_msg%MSG_COUNTER%.xml"
+
+    REM Increment message counter
+    set /a MSG_COUNTER+=1
+    goto START_LOOP
+) 
+if %START_CHECK%
+else (
+    echo No more messages to process or an error occurred.
+)
+
+echo %SAVE_PATH%
+
+REM End of script
+endlocal
